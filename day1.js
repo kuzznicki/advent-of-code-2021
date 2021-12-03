@@ -1,7 +1,7 @@
 const input = getInput().split('\n').map(e => +e);
 
-console.log('part one:', partOne(input), partOneShorter(input), partOneShortest(input));
-console.log('part two:', partTwo(input), partTwoShorter(input), partTwoShortest(input));
+console.log('part one:', partOne(input), partOneShorter(input), partOneShortest(input)); // 1466
+console.log('part two:', partTwo(input), partTwoShorter(input), partTwoShortest(input)); // 1491
 
 function partOne(input) {
     let previousElement = null;
