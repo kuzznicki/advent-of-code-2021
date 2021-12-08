@@ -1,7 +1,9 @@
-const input = getInput().split('\n');
+const fs = require('fs');
+const input = fs.readFileSync('input.txt').toString();
+const inputArray = input.split(',').map(Number);
 
-console.log('part one: ' + partOne(input)); // 
-console.log('part two: ' + partTwo(input)); // 
+console.log('part one: ' + partOne(inputArray)); // 
+console.log('part two: ' + partTwo(inputArray)); // 
 
 function partOne(input) {
     
@@ -9,8 +11,4 @@ function partOne(input) {
 
 function partTwo(input) {
     
-}
-
-function getInput() {
-    return ``;
 }

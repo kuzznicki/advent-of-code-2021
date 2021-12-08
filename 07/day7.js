@@ -1,6 +1,6 @@
 const fs = require('fs');
 const input = fs.readFileSync('input.txt').toString();
-let inputArray = input.split(',').map(Number);
+const inputArray = input.split(',').map(Number);
 
 console.log('part one: ' + JSON.stringify(solve(inputArray, true))); // {"fuel":355521,"position":337}
 console.log('part two: ' + JSON.stringify(solve(inputArray, false))); // {"fuel":100148777,"position":493}
