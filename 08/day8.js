@@ -2,24 +2,26 @@ const fs = require('fs');
 const input = fs.readFileSync('input.txt').toString();
 const inputEntries = input.split('\n').map(line => {
         const lineParts = line.split('|');
-        const [patterns, output] = lineParts.map(part => part.trim().split(' '));
-        return { patterns, output };
+        const [log, output] = lineParts.map(part => {
+            const patterns = part.trim().split(' ');
+            return patterns.map(pattern => pattern.split('').sort().join(''))
+        });
+        return { log, output };
     });
 
-const ALL_SEGMENTS = 'abcdefg';
-const usedSegmentsByDigit = [];
-usedSegmentsByDigit[0] = 'abcefg';
-usedSegmentsByDigit[1] = 'cf';
-usedSegmentsByDigit[2] = 'acdeg';
-usedSegmentsByDigit[3] = 'acdfg';
-usedSegmentsByDigit[4] = 'bcdf';
-usedSegmentsByDigit[5] = 'abdfg';
-usedSegmentsByDigit[6] = 'abdefg';
-usedSegmentsByDigit[7] = 'acf';
-usedSegmentsByDigit[8] = 'abcdefg';
-usedSegmentsByDigit[9] = 'abcdfg';
+const DIGIT = [];
+DIGIT[0] = 'abcefg';
+DIGIT[1] = 'cf';
+DIGIT[2] = 'acdeg';
+DIGIT[3] = 'acdfg';
+DIGIT[4] = 'bcdf';
+DIGIT[5] = 'abdfg';
+DIGIT[6] = 'abdefg';
+DIGIT[7] = 'acf';
+DIGIT[8] = 'abcdefg';
+DIGIT[9] = 'abcdfg';
 
-const digitsBySegmentsCount = { 
+const DIGITS_BY_SEGMENTS_COUNT = { 
     2: [1], 
     3: [7], 
     4: [4], 
@@ -28,101 +30,60 @@ const digitsBySegmentsCount = {
     7: [8]
 };
 
-const result1 = partOne(inputEntries);
-const result2 = partTwo(inputEntries);
-console.log(`part one: ${result1},\tpart two: ${result2}`); // 274, 1012089
+const result = solve(inputEntries);
+console.log('part one: ' + result.partOneAnswer); // 274
+console.log('part two: ' + result.partTwoAnswer); // 1012089
 
-function partOne(entries) {
-    let countOf1478 = 0;
+function solve(entries) {
+    let partOneAnswer = 0;
+    let partTwoAnswer = 0; 
 
     for (const entry of entries) {
+        // part 1
         for (const pattern of entry.output) {
-            const possibleDigits = digitsBySegmentsCount[pattern.length];
-            if (possibleDigits.length === 1) countOf1478++; // 1, 4, 7, 8 use unique number of segments
+            if (DIGITS_BY_SEGMENTS_COUNT[pattern.length].length === 1) partOneAnswer++;
         }
-    }
 
-    return countOf1478;
-}
-
-function partTwo(entries) {
-    let outputSum = 0; 
-
-    for (const entry of entries) {
+        // part 2
         const knownPatterns = {};
-        const patternsFor235 = []; // 2, 3, 5 have same segments count
-        const candidates = {};
-        ALL_SEGMENTS.split('').forEach(segment => candidates[segment] = ALL_SEGMENTS.split(''));
+        
+        for (const pattern of entry.log) {
+            const possibleDigits = DIGITS_BY_SEGMENTS_COUNT[pattern.length];
+            if (possibleDigits.length === 1) knownPatterns[possibleDigits[0]] = pattern;
+        }
 
-        for (const pattern of entry.patterns) {
-            const possibleDigits = digitsBySegmentsCount[pattern.length];
-
-            if (possibleDigits.length === 1) {
-                const digit = possibleDigits[0];
-                knownPatterns[digit] = pattern.split('');
-                
-                if (digit !== 8) {
-                    const signals = pattern.split('');
-
-                    for (let segment in candidates) {
-                        candidates[segment] = usedSegmentsByDigit[digit].includes(segment)
-                            ? candidates[segment].filter(candidate => signals.includes(candidate))
-                            : candidates[segment].filter(candidate => !signals.includes(candidate));
-                    }
+        for (const pattern of entry.log) {
+            if (pattern.length === 5) {
+                if (patternsDiff(pattern, knownPatterns[1]).length === 3) {
+                    knownPatterns[3] = pattern;
+                } else if (patternsDiff(pattern, knownPatterns[4]).length === 3) {
+                    knownPatterns[2] = pattern;
+                } else {
+                    knownPatterns[5] = pattern;
                 }
-            } else if (possibleDigits.includes(2)) {
-                patternsFor235.push(pattern);
+            } else if (pattern.length === 6) {
+                if (patternsDiff(pattern, knownPatterns[1]).length === 5) {
+                    knownPatterns[6] = pattern;
+                } else if (patternsDiff(pattern, knownPatterns[4]).length === 2) {
+                    knownPatterns[9] = pattern;
+                } else {
+                    knownPatterns[0] = pattern;
+                }
             }
         }
 
-        // to display 2, 3, 5 digits, segments 'e' & 'b' are used only once. 'e' for 2, 'b' for 5
-        const signalCountsFor235 = patternsFor235.join('').split('').reduce((counts, signal) => {
-            counts[signal] = (counts[signal] || 0) + 1;
-            return counts;
-        }, {});
+        const digitByPattern = Object.fromEntries(Object.entries(knownPatterns).map(e => e.reverse()));
+        partTwoAnswer += Number(entry.output.map(pattern => digitByPattern[pattern]).join(''));
 
-        const signalsForEB = Object.keys(signalCountsFor235).filter(signal => signalCountsFor235[signal] === 1);
-        const signalForB = signalsForEB.filter(signal => knownPatterns[4].includes(signal))[0];
-        const signalForE = signalsForEB.filter(signal => signal !== signalForB)[0];
-        assignSignalToSegment(candidates, 'b', signalForB);
-        assignSignalToSegment(candidates, 'e', signalForE);
-
-        knownPatterns[2] = patternsFor235.filter(pattern => pattern.split('').includes(signalForE))[0];
-        const signalForC = knownPatterns[1].filter(signal => knownPatterns[2].includes(signal))[0];
-        assignSignalToSegment(candidates, 'c', signalForC);
-
-        // here I finally have only one signal candidate for each segment
-        const signalToSegment = {};
-        Object.entries(candidates).forEach(kv => signalToSegment[kv[1][0]] = kv[0]);
-
-        const decodedPatterns = entry.patterns.map(p => decodePattern(p, signalToSegment));
-        const decodedOutput = entry.output.map(p => decodePattern(p, signalToSegment));
-        outputSum += Number(decodedOutput.join(''));
-
-        console.log(decodedPatterns.join(' ') + ' | ' + decodedOutput.join(' '));
+        console.log([entry.log, entry.output].map(arr => {
+            return arr.map(p => digitByPattern[p]).join(' ');
+        }).join(' | '));
     }
 
-    return outputSum;
+    return { partOneAnswer, partTwoAnswer };
 }
 
-function decodePattern(pattern, signalToSegment) {
-    const possibleDigits = digitsBySegmentsCount[pattern.length];
-    if (possibleDigits.length === 1) return possibleDigits[0];
-
-    const segments = pattern.split('').map(signal => signalToSegment[signal]);
-
-    for (const digit of possibleDigits) {
-        const diff = usedSegmentsByDigit[digit].split('').filter(s => !segments.includes(s));
-        if (diff.length === 0) return digit;
-    }
-
-    throw new Error('failed to decode pattern');
-};
-
-function assignSignalToSegment(candidates, segment, signal) {
-    for (let seg in candidates) {
-        candidates[seg] = seg !== segment
-            ? candidates[seg].filter(candidate => candidate !== signal)
-            : [signal];
-    }
+function patternsDiff(p1, p2) {
+    const [p1Array, p2Array] = [p1, p2].map(pattern => pattern.split(''));
+    return p1Array.filter(char => !p2Array.includes(char));
 }
