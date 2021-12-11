@@ -27,8 +27,7 @@ function step(octopuses) {
         if (octopuses[y][x] > 9) flashes += flash(x, y);
     });
     atEachYXIteration(octopuses, (y, x) => { 
-        // set flashed octopuses energy to 0
-        if (octopuses[y][x] === -1) octopuses[y][x] = 0; 
+        if (octopuses[y][x] === -1) octopuses[y][x] = 0; // set flashed octopuses energy to 0
     });
     
     return flashes;
@@ -43,11 +42,11 @@ function step(octopuses) {
 
     function flash(x, y) {
         let flashes = 1;
-        input[y][x] = -1; // mark flashed octopus with -1
+        octopuses[y][x] = -1; // mark flashed octopus with -1
 
         getAdjacentCoords(x, y).forEach(a => {
-            if (input[a.y][a.x] === -1) return; // only 1 flash per step
-            if (++input[a.y][a.x] > 9) flashes += flash(a.x, a.y);
+            if (octopuses[a.y][a.x] === -1) return; // don't charge octopuses which flashed
+            if (++octopuses[a.y][a.x] > 9) flashes += flash(a.x, a.y);
         });
 
         return flashes;
