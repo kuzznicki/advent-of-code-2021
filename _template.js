@@ -1,14 +1,11 @@
 const fs = require('fs');
-const input = fs.readFileSync('input.txt').toString();
-const inputArray = input.split(',').map(Number);
+const inputString = fs.readFileSync('input.txt').toString();
+const input = inputString.split(',').map(Number);
 
-console.log('part one: ' + partOne(inputArray)); // 
-console.log('part two: ' + partTwo(inputArray)); // 
+const answer = solve(input);
+console.log('part one: ' + answer.one); // 
+console.log('part two: ' + answer.two); // 
 
-function partOne(input) {
-    
-}
-
-function partTwo(input) {
+function solve(input) {
     
 }
